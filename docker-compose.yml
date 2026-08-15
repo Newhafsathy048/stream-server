@@ -1,0 +1,36 @@
+services:
+  stream:
+    image: alfg/nginx-rtmp:latest
+    container_name: stream-server
+    restart: unless-stopped
+    # Ruka entrypoint ya image (inaandika upya /etc/nginx/nginx.conf); tunatumia conf yetu.
+    entrypoint: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "1935:1935"   # RTMP ingest (OBS / FFmpeg)
+      - "8080:8080"   # HTTP: player + HLS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web:/www/static:ro
+      - hls:/tmp/hls
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Hutengeneza 360p (SD) + 480p kutoka kwenye stream inayoingia.
+  transcoder:
+    image: alfg/nginx-rtmp:latest
+    container_name: stream-transcoder
+    restart: unless-stopped
+    depends_on:
+      - stream
+    entrypoint: ["/bin/sh", "/opt/run.sh"]
+    environment:
+      RTMP_HOST: stream
+      STREAM_KEYS: "stream"   # ongeza keys zaidi: "stream stream2"
+    volumes:
+      - ./transcoder/run.sh:/opt/run.sh:ro
+
+volumes:
+  hls:
