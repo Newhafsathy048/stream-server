@@ -75,6 +75,26 @@ Player inaweza kupewa URL kupitia query string:
 3. Linda ingest: badilisha `allow publish all;` kuwa IP yako pekee, au tumia
    `on_publish` callback kuthibitisha stream key.
 
+## Kupeleka Fly.io (bila VPS)
+
+`Dockerfile` inaunganisha nginx-rtmp + transcoder kwenye container moja, na
+`fly.toml` inafungua HTTP (player) pamoja na TCP 1935 (ingest).
+
+```bash
+curl -L https://fly.io/install.sh | sh
+fly auth login
+fly launch --no-deploy --copy-config --name JINA-LAKO   # tumia fly.toml iliyopo
+fly ips allocate-v4          # RTMP inahitaji IPv4 ya kudumu (~$2/mwezi)
+fly deploy
+```
+
+- Ingest: `rtmp://JINA-LAKO.fly.dev:1935/live` (stream key: `stream`)
+- Player: `https://JINA-LAKO.fly.dev/`
+
+> Fly hutoa IPv4 ya pamoja kwa bandari 80/443 pekee, ndiyo maana `fly ips allocate-v4`
+> inahitajika kwa RTMP. Kwenye Railway tumia "TCP Proxy" kwa bandari 1935 badala yake.
+> Render/Vercel/Netlify hazikubali RTMP kabisa.
+
 ## Kurekebisha ubora
 
 Katika `transcoder/run.sh`, badilisha `-b:v` na `scale=-2:360`
