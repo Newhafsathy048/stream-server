@@ -1,0 +1,43 @@
+app = "stream-server"
+primary_region = "fra"   # Frankfurt — latency nzuri kwa Afrika Mashariki
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  STREAM_KEYS = "stream"
+
+# Player + HLS (HTTP/HTTPS)
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+
+# RTMP ingest (OBS/FFmpeg). Inahitaji IPv4 ya kudumu: `fly ips allocate-v4`
+[[services]]
+  internal_port = 1935
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+
+  [[services.ports]]
+    port = 1935
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2gb"
